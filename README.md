@@ -1,6 +1,5 @@
-# GameBoyDev
-An example gameboy game project.
-
+# Super Hedges
+Hedges but for Gameboy
 ## How to Build the ROM
 
 ### Depedencies
@@ -15,7 +14,6 @@ With the assembler installed, open a command-line and run make:
 $ make
 ```
 
-This will run the make script and produce the `bin/GameBoyDev.gb` rom.
 
 ### Easy Build in VS Code
 
