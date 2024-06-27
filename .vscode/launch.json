@@ -9,7 +9,7 @@
       "request": "launch",
       "name": "Launch in Emulicious",
       // "program": "${workspaceFolder}/${command:AskForProgramName}",
-      "program": "${workspaceFolder}/bin/GameBoyDev.gb",
+      "program": "${workspaceFolder}/bin/SuperHedges.gb",
       "port": 58870,
       "stopOnEntry": true
     }

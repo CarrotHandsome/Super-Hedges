@@ -1,0 +1,2 @@
+type=instruction address=ClearOam%20+%2038 end=ClearOam%20+%2040 enabled=false suspend=true condition= message=
+type=instruction address=Rotate16Bit end=Rotate16Bit enabled=true suspend=true condition= message=
