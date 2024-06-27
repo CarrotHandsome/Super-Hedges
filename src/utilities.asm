@@ -8,6 +8,9 @@ SECTION "Utilities", rom0
 ; @param hl: Destination
 ; @param bc: Length
 ;does not preserve a
+
+JustReturn::
+    ret
 Memcopy::
     ld a, [de]
     ld [hli], a
@@ -17,6 +20,18 @@ Memcopy::
     or a, c
     jp nz, Memcopy
     ret
+
+;hl, a operands, hl returns  
+Add8BitTo16Bit:: 
+    ld b, a
+    add l
+    jp nc, NoCarry
+    inc h
+    NoCarry:
+    ld l, a
+    ld a, b
+    ret
+
 ;hl + de, return hl
 Add16BitTo16Bit::
     ld b, a
@@ -31,35 +46,39 @@ Add16BitTo16Bit::
     ld h, a
     ld a, b
     ret
+
 ;Multiply hl by 2, b times
 MultiplyN::    
     MultLoop:
-    call Rotate16Bit
+    call SL16Bit
     dec b
     jp nz, MultiplyN
     ret
+
 ;rotate hl left. does not preserve a
-Rotate16Bit::      
-    ld a, l
-    rla
-    ld l, a
-    jp nc, ReturnRotated    
+SL16Bit::      
+    sla h
+    sla l
+    ret nc
     ld a, h
-    rla    
     or $01
     ld h, a
-    ReturnRotated:    
     ret
-;hl, a operands, hl returns   
-Add8BitTo16Bit:: 
-    ld b, a
-    add l
-    jp nc, NoCarry
-    inc h
-    NoCarry:
+;rotate hl right. 
+SR16Bit::
+    srl l
+    srl h
+    ret nc
+    ld a, l
+    or $80
     ld l, a
-    ld a, b
     ret
+
+
+; ;takes a as seed
+; Random::
+;     ld b, a
+
 
 ;register and memory management
 ScratchHL::
