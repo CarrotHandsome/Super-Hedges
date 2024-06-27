@@ -1,4 +1,0 @@
-type=watchpoint address=200 end=202 enabled=true suspend=false read=true write=false condition=op%20%3d%202%20&&%20&pc%20%3d%200 message= location=cpu
-suspend=true address=PressA end=-1 type=instruction enabled=true
-type=instruction address=CheckRight end=CheckRight%20+%202 enabled=false suspend=true condition= message=
-type=watchpoint address=wCurKeys end=-1 enabled=true suspend=true read=true write=true condition= message= location=ram
