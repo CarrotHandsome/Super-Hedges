@@ -77,6 +77,8 @@ ld [wScratchB], a
 ld a, TL_GRS
 ld [wSelectedTileIndex], a
 
+call InitializeRandom
+
 Main:
 ;wait till its not Vblank
 ld a, [rLY]
@@ -93,6 +95,9 @@ CheckA:
     ld a, [wCurKeys]
     and a, PADF_A
     jp z, CheckLeft   
+    
+    call Random
+
 
 
 CheckLeft:
@@ -122,6 +127,17 @@ jp z, Main
 ld [_OAMRAM + 1], a
 jp Main
 
+InitializeRandom:   
+    GetTimer: 
+    ld a, [$FF04] ;ff05 is timer register
+    add 0
+    jp z, GetTimer
+    ld h, a
+    ld l, a
+    ld [wRandom], a
+    ld [wRandom + 1], a
+    call Random
+    ret
 UpdateKeys:
     ; Poll half the controller
     ld a, P1F_GET_BTN

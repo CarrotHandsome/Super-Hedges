@@ -74,11 +74,58 @@ SR16Bit::
     ld l, a
     ret
 
-
-; ;takes a as seed
-; Random::
-;     ld b, a
-
+;takes hl and de, returns hl
+XOR16Bit::
+    ld a, h
+    ld b, d
+    xor b
+    ld h, a
+    ld a, l
+    ld b, e
+    xor b
+    ld l, a
+    ret
+;takes [wRandom] as seed
+Random::
+    ld a, [wRandom]
+    ld h, a
+    ld a, [wRandom + 1]
+    ld l, a
+    call HLtoDE
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call XOR16Bit
+    call HLtoDE
+    call SR16Bit
+    call SR16Bit
+    call SR16Bit
+    call SR16Bit
+    call SR16Bit
+    call SR16Bit
+    call SR16Bit
+    call SR16Bit
+    call SR16Bit
+    call XOR16Bit
+    call HLtoDE
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call SL16Bit
+    call XOR16Bit
+    ld a, h
+    ld [wRandom], a
+    ld a, l
+    ld [wRandom + 1], a
+    ret
 
 ;register and memory management
 ScratchHL::

@@ -2,6 +2,7 @@ INCLUDE "hardware.inc"
 
 
 SECTION "GlobalVariables", wram0
+wRandom:: dw
 wFrameCounter:: db
 wTilemapAddress:: dw
 wScratchA:: db
