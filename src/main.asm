@@ -95,8 +95,9 @@ CheckA:
     ld a, [wCurKeys]
     and a, PADF_A
     jp z, CheckLeft   
-    
-    call Random
+    ld a, 50
+    ld b, 43
+    call RandomRange8
 
 
 
@@ -132,8 +133,6 @@ InitializeRandom:
     ld a, [$FF04] ;ff05 is timer register
     add 0
     jp z, GetTimer
-    ld h, a
-    ld l, a
     ld [wRandom], a
     ld [wRandom + 1], a
     call Random

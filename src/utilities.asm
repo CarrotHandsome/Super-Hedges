@@ -21,6 +21,20 @@ Memcopy::
     jp nz, Memcopy
     ret
 
+;divides a by b, returns a as product, b as remainder
+Divide::
+    ld c, 0 ;product
+    ld d, 0 ;remainder
+    DivLoop:
+        ld d, a
+        inc c
+        sub b        
+        jp nc, DivLoop
+        ld b, d
+        dec c
+        ld a, c
+    ret 
+
 ;hl, a operands, hl returns  
 Add8BitTo16Bit:: 
     ld b, a
@@ -125,6 +139,39 @@ Random::
     ld [wRandom], a
     ld a, l
     ld [wRandom + 1], a
+    ret
+
+;takes b, a as min, max, returns a as range bound random 8bit number
+RandomRange8::
+    sub b
+    add 1
+    ld [wScratchB], a ;preserve n
+
+    ld a, b
+    ld [wScratchA], a ;preserve min
+    ld a, [wScratchB]
+    ld b, a
+    ld a, 255
+    call Divide ;b is remainder now
+    ld a, b
+    ld [wScratchC], a ;preserve remainder
+    RejectionLoop: ;loop until rand + remainder - 255 >= 0
+        call Random        
+        ld a, [wScratchC]
+        ld b, a
+        ld a, [wRandom + 1]
+        add b
+        sub 255
+        jp nc, RejectionLoop
+    ;return min + random % n
+    ld a, [wScratchB]
+    ld b, a
+    ld a, [wRandom + 1]
+    call Divide
+    ld a, [wScratchA]
+    ld d, a
+    ld a, b
+    add d    
     ret
 
 ;register and memory management
