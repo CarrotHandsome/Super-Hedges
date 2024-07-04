@@ -10,8 +10,11 @@ DrawCard::
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;GET TO CARD DEFINITION;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ld [wScratchE], a ;preserve those 2 bits for later  
+    srl a 
+    srl a
     call HLtoDE
-    call ScratchDE ; scratches c,e hold vram location
+    call ScratchDE ; scratches c,e hold vram location    
     ld h, 0
     ld l, a
     ld b, 3 ;multiply index by 8 (size of each entry)
@@ -19,33 +22,35 @@ DrawCard::
     call HLtoDE
     ld hl, CardDef
     call Add16BitTo16Bit ;add index offset to address    
-    inc hl ;inc to suit/rank byte
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;DRAW RANK, TOP, AND SUIT;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    inc hl
+    
+    
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;DRAW RANK, TOP, AND TOP RIGHT;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;get the rank tile index
-    ld a, [hli] ;this byte is SSSRRRR
-    ld c, a
-    and %0001111 ;isolate the rank   
+    ld a, [hli] ;this byte is RRRRRRSS
+    ld [wScratchF], a
+    ;isolate the rank   
+    srl a
+    srl a   
+    dec a
     call ScratchHL ;scratches a,b hold address of first byte of card definition art tile indices
     call UnScratchDE    
-    ld [de], a ;draw the tile
-    inc de
-    ld a, NUM_RANKS ;pass over rank tiles to get to top art tiles
+    ld [de], a ;draw the rank tile
+    inc de ;move to next tile to be drawn
+    ld a, NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART  ;draw top of card
     ld [de], a
     inc de
-    ld a, c
-    srl a
-    srl a
-    srl a
-    srl a    ;isolate suit, rotating rank out
-    add NUM_RANKS + NUM_TOPART ;skip over rank and top tiles
+    ld a, NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART + 1
     ld [de], a
     ld a, 30
     call DEtoHL
     call Add8BitTo16Bit
     call HLtoDE
     call UnScratchHL
+    
+    
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;DRAW UPPER ART;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,7 +63,7 @@ DrawCard::
     srl a
     srl a
     ;add number of tiles above
-    add NUM_RANKS + NUM_TOPART + NUM_SUITS
+    add NUM_RANKS + NUM_SUITS + NUM_ANIMALS
     ld [de], a
     inc de    
     call ScratchDE
@@ -81,14 +86,14 @@ DrawCard::
     srl a
     or d ;this is the middle art index
     ;add number of tiles above
-    add NUM_RANKS + NUM_TOPART + NUM_SUITS + NUM_LEFTART
+    add NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART
     call UnScratchDE
     ld [de], a
     inc de
     ld a, c
     ;finally get right art index with an and
     and %00011111
-    add NUM_RANKS + NUM_TOPART + NUM_SUITS + NUM_LEFTART + NUM_MIDDLEART
+    add NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART
     ld [de], a
     ld a, 30
     call DEtoHL
@@ -101,14 +106,14 @@ DrawCard::
 
     ;the below a is LLLLLMMM (index of left art and partial index of middle art)    
     ld a, [hli]
-    ; hl now pointing to 2nd byte of art, a = the 1st
+    ; hl now pointing to 2nd byte of art
     ld c, a
     ;isolate leftmost 5 bits by rotating right 3 times
     srl a
     srl a
     srl a
     ;add number of tiles above
-    add NUM_RANKS + NUM_TOPART + NUM_SUITS
+    add NUM_RANKS + NUM_SUITS + NUM_ANIMALS
     ld [de], a
     inc de    
     call ScratchDE
@@ -131,14 +136,14 @@ DrawCard::
     srl a
     or d ;this is the middle art index
     ;add number of tiles above
-    add NUM_RANKS + NUM_TOPART + NUM_SUITS + NUM_LEFTART
+    add NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART
     call UnScratchDE
     ld [de], a
     inc de
     ld a, c
     ;finally get right art index with an and
     and %00011111
-    add NUM_RANKS + NUM_TOPART + NUM_SUITS + NUM_LEFTART + NUM_MIDDLEART
+    add NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART
     ld [de], a
     ld a, 30
     call DEtoHL
@@ -148,13 +153,15 @@ DrawCard::
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;DRAW BOTTOM;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ld a, NUM_RANKS + NUM_TOPART + NUM_SUITS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART
+    ld a, [wScratchF]
+    and %00000011  ;isolate suit
+    add NUM_RANKS  ;skip over rank and top tiles
     ld [de], a
     inc de
-    ld a, NUM_RANKS + NUM_TOPART + NUM_SUITS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART + NUM_BOTTOMLEFT
+    ld a, NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART + 2
     ld [de], a
     inc de
-    ld a, NUM_RANKS + NUM_TOPART + NUM_SUITS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART + NUM_BOTTOMLEFT + NUM_BOTTOM
+    ld a, NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART + 3
     ld [de], a
     ret
 
