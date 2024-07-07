@@ -29,8 +29,9 @@ SelectedCard:: ds 1
 PlayerDeck:: ds 64 
 PlayerDiscard:: ds 64
 GameDeck:: ds 32
-PlayerHand:: ds 15
+PlayerHand:: ds 20
 LocationsEnd::
+PlayerDeckPointer:: ds 2 ;16 bit address points to card on top of PlayerDeck
 
 
 SECTION "Card Definitions", rom0

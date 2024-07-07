@@ -216,10 +216,10 @@ RenderHand::
     ld a, [wScratchH] ;get back to card count
     add 0
     ret z ;return without rendering anything if there are 0 cards in hand
-    sub 9 
+    sub 10 
     jp nc, .render15
     ld a, [wScratchH]
-    sub 6
+    sub 7
     jp nc, .render8
     ;set hand offset and render. 
     ld a, 3

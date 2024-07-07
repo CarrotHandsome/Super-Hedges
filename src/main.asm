@@ -70,21 +70,8 @@ ld [wSelectedTileIndex], a
 call InitializeRandom
 call InitializeCardLocations
 
-ld a, $00
-ld hl, PlayerHand
-call CreateCard
-ld a, $04
-ld hl, PlayerHand
-call CreateCard
-ld a, $08
-ld hl, PlayerHand
-call CreateCard
-ld a, $0C
-ld hl, PlayerHand
-call CreateCard
-ld a, $10
-ld hl, PlayerHand
-call CreateCard
+call GenerateRandomDeck
+
 
 call RenderHand
 
