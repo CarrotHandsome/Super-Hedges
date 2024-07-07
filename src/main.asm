@@ -8,10 +8,7 @@ SECTION "Header", ROM0[$100]
 
 EntryPoint:
 ;do not turn off LCD outside VBlank
-WaitVBlank:
-ld a, [rLY]
-cp 144
-jp c, WaitVBlank
+call WaitVBlank
 
 ;turn LCD off
 ld a, 0
@@ -49,39 +46,6 @@ ld [hl], a
 
 
 
-;Draw a card
-ld a, $0C
-ld hl, ENCOUNTER_CARD_1
-call DrawCard
-ld a, $00
-ld hl, ENCOUNTER_CARD_2
-call DrawCard
-ld a, $04
-ld hl, ENCOUNTER_CARD_3
-call DrawCard
-ld a, $08
-ld hl, ENCOUNTER_CARD_4
-call DrawCard
-
-ld a, $0C
-ld hl, EXPLORE_1
-call DrawCard
-ld a, $04
-ld hl, EXPLORE_2
-call DrawCard
-
-ld a, $0C
-ld hl, HAND_CARD_1
-call DrawCard
-ld a, $00
-ld hl, HAND_CARD_3
-call DrawCard
-ld a, $0C
-ld hl, HAND_CARD_5
-call DrawCard
-ld a, $08
-ld hl, HAND_CARD_7
-call DrawCard
 
 ;turn lcd on
 ld a, LCDCF_ON | LCDCF_BGON | LCDCF_OBJON
@@ -100,10 +64,29 @@ ld [wCurKeys], a
 ld [wNewKeys], a
 ld [wScratchA], a
 ld [wScratchB], a
-ld a, TL_GRS
+ld a, $7F
 ld [wSelectedTileIndex], a
 
 call InitializeRandom
+call InitializeCardLocations
+
+ld a, $00
+ld hl, PlayerHand
+call CreateCard
+ld a, $04
+ld hl, PlayerHand
+call CreateCard
+ld a, $08
+ld hl, PlayerHand
+call CreateCard
+ld a, $0C
+ld hl, PlayerHand
+call CreateCard
+ld a, $10
+ld hl, PlayerHand
+call CreateCard
+
+call RenderHand
 
 Main:
 ;wait till its not Vblank
@@ -118,12 +101,14 @@ jp c, WaitVBlank2
 call UpdateKeys
 
 CheckA:
-    ld a, [wCurKeys]
+    ld a, [wNewKeys]
     and a, PADF_A
     jp z, CheckLeft   
-    ld a, 50
-    ld b, 43
-    call RandomRange8
+    call ClearHand
+    ld a, $10
+    ld hl, PlayerHand
+    call CreateCard
+    call RenderHand
 
 
 
@@ -269,19 +254,16 @@ DB $80, $91, $00, $8A, $00, $AC, $80, $17
 
 
     Suits:
-    DB $A0, $3C, $4E, $FE, $D1, $7F, $55, $FF
-    DB $CD, $FF, $41, $FF, $BE, $BE, $7F, $7F
-    DB $80, $18, $08, $94, $88, $14, $00, $94
-    DB $92, $A4, $01, $A6, $A1, $C2, $7F, $7F
-    DB $9C, $1C, $3E, $80, $BE, $3E, $3E, $80
-    DB $BE, $BE, $1C, $80, $88, $88, $7F, $7F
-    DB $C9, $49, $2A, $AA, $80, $1C, $63, $FF
-    DB $80, $9C, $2A, $AA, $C9, $C9, $7F, $7F
-    DB $B6, $36, $08, $C9, $C9, $2A, $6B, $9C
-    DB $EB, $9C, $49, $AA, $88, $C9, $7F, $7F
-    
-
-
+    DB $9C, $20, $30, $CE, $AE, $51, $2A, $D5
+DB $B2, $CD, $3E, $C1, $80, $BE, $7F, $7F
+DB $80, $08, $00, $88, $80, $1C, $08, $94
+DB $88, $B6, $1C, $A2, $BE, $C1, $7F, $7F
+DB $9C, $1C, $3E, $80, $BE, $3E, $3E, $80
+DB $BE, $BE, $1C, $80, $88, $88, $7F, $7F
+DB $C9, $49, $2A, $AA, $80, $1C, $63, $FF
+DB $80, $9C, $2A, $AA, $C9, $C9, $7F, $7F
+DB $9C, $63, $08, $B6, $88, $1C, $3E, $BE
+DB $88, $9C, $08, $B6, $9C, $E3, $7F, $7F
 
 
 

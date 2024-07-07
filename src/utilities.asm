@@ -9,6 +9,8 @@ SECTION "Utilities", rom0
 ; @param bc: Length
 ;does not preserve a
 
+
+
 JustReturn::
     ret
 Memcopy::
@@ -63,11 +65,32 @@ Add16BitTo16Bit::
 
 ;Multiply hl by 2, b times
 MultiplyN::    
-    MultLoop:
     call SL16Bit
     dec b
     jp nz, MultiplyN
     ret
+;multiply a by b, return a
+Multiply8::
+    ld c, 0 ;we need c=0 for if b=0 and we immediately jumpt to .returnProduct
+    ld d, a
+    ld a, b
+    sub 0
+    jp z, .returnProduct
+    ld a, d
+    .multLoop:
+        ld c, a
+        ld a, b
+        dec a
+        jp z, .returnProduct
+        ld b, a
+        ld a, c
+        add d
+        jp .multLoop
+    .returnProduct:
+        ld a, c
+        ret
+        
+
 
 ;rotate hl left. does not preserve a
 SL16Bit::      
@@ -222,4 +245,20 @@ DEtoHL::
     ld a, e
     ld l, a
     ld a, b
+    ret
+
+WaitVBlank::
+ld a, [rLY]
+cp 144
+jp c, WaitVBlank
+ret
+WaitNotVBlank::
+ld a, [rLY]
+cp 144
+jp nc, WaitNotVBlank
+ret
+
+WaitNextFrame::
+    call WaitNotVBlank
+    call WaitVBlank
     ret
