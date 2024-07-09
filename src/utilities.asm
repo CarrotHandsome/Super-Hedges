@@ -63,6 +63,21 @@ Add16BitTo16Bit::
     ld a, b
     ret
 
+; ;hl - de, return hl. don't use to make negative numbers
+; Subtract16BitFrom16Bit::
+;     ld b, a
+;     ld a, l
+;     sub e
+;     jp nc, .noCarry
+;     dec h
+;     .noCarry:
+;         ld l, a
+;         ld a, h
+;         add d
+;         ld h, a
+;         ld a, b
+;     ret
+
 ;Multiply hl by 2, b times
 MultiplyN::    
     call SL16Bit
@@ -211,6 +226,22 @@ UnScratchHL::
     ld a, [wScratchA]
     ld h, a
     ld a, [wScratchB]
+    ld l, a
+    ld a, b
+    ret
+ScratchHL2::
+    ld b, a
+    ld a, h
+    ld [wScratchK], a
+    ld a, l
+    ld [wScratchL], a
+    ld a, b
+    ret
+UnScratchHL2::
+    ld b, a
+    ld a, [wScratchK]
+    ld h, a
+    ld a, [wScratchL]
     ld l, a
     ld a, b
     ret

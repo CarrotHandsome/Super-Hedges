@@ -70,8 +70,8 @@ ld [wSelectedTileIndex], a
 call InitializeRandom
 call InitializeCardLocations
 
-call GenerateRandomDeck
 
+call GenerateRandomDeck
 
 call RenderHand
 
@@ -92,10 +92,12 @@ CheckA:
     and a, PADF_A
     jp z, CheckLeft   
     call ClearHand
-    ld a, $10
-    ld hl, PlayerHand
-    call CreateCard
+    call PlayerDraw
     call RenderHand
+    ; ld a, $10
+    ; ld hl, PlayerHand
+    ; call CreateCard
+    ; call RenderHand
 
 
 

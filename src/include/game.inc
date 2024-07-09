@@ -11,6 +11,7 @@ DEF NUM_RIGHTART EQU 8
 
 DEF NUM_CARDS EQU 5 ;card definitions
 DEF MAX_CARDS_HAND EQU 20
+DEF MAX_CARDS EQU 64 ;max cards in a collection, ie PlayerCards and ScenarioCards
 
 
 DEF BLANK_TILE EQU $7F
