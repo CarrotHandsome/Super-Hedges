@@ -44,9 +44,6 @@ ld a, 0
 ld [hli], a
 ld [hl], a
 
-
-
-
 ;turn lcd on
 ld a, LCDCF_ON | LCDCF_BGON | LCDCF_OBJON
 ld [rLCDC], a

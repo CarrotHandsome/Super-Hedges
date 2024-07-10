@@ -307,71 +307,7 @@ RenderHand::
         dec hl
         jp .render
 
-; RenderHand::
-;     call WaitNextFrame
-    
-;     ;get # of cards in hand
-;     ld hl, PlayerHand
-;     call CountCards
-;     ;point hl at card indices in player hand
-;     ld hl, PlayerHand
-;     ld [wScratchH], a ;scratchH is card count
-;     ld a, 0
-;     ld [wScratchG], a ;scratchG is cards rendered so far
-;     ;determine which of 3 layouts to render, 1-5 cards, 6-8 cards, or 9-15 cards
-;     ld a, [wScratchH] ;get back to card count
-;     add 0
-;     ret z ;return without rendering anything if there are 0 cards in hand
-;     sub 10 
-;     jp nc, .render15
-;     ld a, [wScratchH]
-;     sub 7
-;     jp nc, .render8
-;     ;set hand offset and render. 
-;     ld a, 3
-;     ld [wHandOffset], a
-;     jp .render  
 
-;     .render8:
-;         ld a, 2
-;         ld [wHandOffset], a
-;         jp .render       
-
-;     .render15:
-;         ld a, 1
-;         ld [wHandOffset], a    
-
-;     .render:
-;         ld a, [hli] ;get index of next card in hand
-;         ld [wScratchJ], a ;save index
-;         ;store hl away until after we render this card
-;         ld a, h
-;         ld [wScratchE], a
-;         ld a, l
-;         ld [wScratchI], a
-;         ;add rendered card count * offset to vram address 
-;         ld a, [wHandOffset]
-;         ld b, a
-;         ld a, [wScratchG]        
-;         call Multiply8
-;         ld hl, HAND_CARD_1 ;add offset to vram location
-;         call Add8BitTo16Bit
-;         ld a, [wScratchJ] ;get card index back
-;         call RenderCard  
-;         ld a, [wScratchG]      
-;         inc a ;rendered card count increases
-;         ld [wScratchG], a
-;         ;is cards rendered == card count? if so then ret
-;         ld b, a
-;         ld a, [wScratchH] ;get card count
-;         sub b 
-;         ret z
-;         ;if not then restore hl to point at the next index of cards in hand and return to the start of the loop
-;         ld a, [wScratchE]
-;         ld h, a
-;         ld a, [wScratchI]
-;         ld l, a
-;         jp .render
 
 ;sets tiles in hand zone to clear.  $99C0 - $9A33
 ClearHand::
