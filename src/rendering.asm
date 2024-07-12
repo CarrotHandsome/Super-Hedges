@@ -5,20 +5,19 @@ INCLUDE "game.inc"
 SECTION "Rendering", rom0
 
 ;tilemap $9800-$9bff, 32x32 tiles
-;[wScratchJ]=index, [wScratchF]=rank hl=vram location of top left corner
+;a=index, b=rank hl=vram location of top left corner
 RenderCard::
-    call WaitNextFrame
+    
+    push de
+    push bc
+    push hl ; save vram location  
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;GET TO CARD DEFINITION;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
-    ;rotate location out of byte
-    ld a, [wScratchJ]
-    srl a 
-    srl a
-
     
-    call HLtoDE
-    call ScratchDE ; save vram location  
+    
+    ld c, b ;rank
     ;get address of start of card definition
     ld h, 0
     ld l, a    
@@ -29,21 +28,21 @@ RenderCard::
     ld hl, CardDef 
     call Add16BitTo16Bit ;add index offset to address   
     
-
+    call WaitNextFrame
     
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;DRAW RANK, TOP, AND TOP RIGHT;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;get the rank tile index
-    ld a, [hli] ;this byte is RRRRRRSS
-    ; ld [wScratchF], a
-    ; ;isolate the rank   
-    srl a
-    srl a 
-    srl a  
-    dec a ;compensate for 0-based index
-    call ScratchHL ;hold address of first byte of card definition art tile indices
-    call UnScratchDE    
+    ld a, [hli] ;this byte is RRRRRSSS
+    ;isolate the suit
+    and %00000111
+    ld [wScratchJ], a
+    
+    pop de ;get the vram address   
+    push hl ;hold address of first byte of card definition art tile indices
+    ld a, c
+    dec a
     ld [de], a ;draw the rank tile
     inc de ;move to next tile to be drawn
     ld a, NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART  ;draw top of card
@@ -52,11 +51,15 @@ RenderCard::
     ld a, NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART + 1
     ld [de], a
     ld a, 30
-    call DEtoHL
+    ;add 30 to de (vram)
+    push de
+    pop hl
     call Add8BitTo16Bit
-    call HLtoDE
-    call UnScratchHL
-    
+    push hl
+    pop de    
+    ;call HLtoDE
+    ;call UnScratchHL
+    pop hl ;get address of first art byte
     
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;DRAW UPPER ART;;;;;;;;;;;;;;;;;;;;
@@ -64,7 +67,7 @@ RenderCard::
     ;the below a is LLLLLMMM (index of left art and partial index of middle art)    
     
     ld a, [hli]
-    ; hl now pointing to 2nd byte of art, a = the 1st
+    
     ld c, a
     ;isolate leftmost 5 bits by rotating right 3 times
     srl a
@@ -84,7 +87,7 @@ RenderCard::
     
     ld d, a ;need to join this with the first 3 bits of the 2nd byte
     ld a, [hli] ;a = MMMRRRRR
-    call ScratchHL
+    ;call ScratchHL
     ld c, a
     ;rotate right to get other partial index 
     srl a
@@ -104,17 +107,20 @@ RenderCard::
     add NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART
     ld [de], a
     ld a, 30
-    call DEtoHL
+    push hl ;address of first lower art byte
+    push de
+    pop hl
     call Add8BitTo16Bit
-    call HLtoDE
-    call UnScratchHL
+    push hl
+    pop de
+    
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;DRAW LOWER ART;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+    pop hl
     ;the below a is LLLLLMMM (index of left art and partial index of middle art)    
     ld a, [hli]
-    ; hl now pointing to 2nd byte of art
+    ; hl now pointing to 2nd byte of lower art
     ld c, a
     ;isolate leftmost 5 bits by rotating right 3 times
     srl a
@@ -149,25 +155,22 @@ RenderCard::
     ld [de], a
     inc de
     ld a, c
-    ;finally get right art index with an and
+    ;get right art index
     and %00011111
     add NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART
     ld [de], a
-    ld a, 30
-    call DEtoHL
+    ld a, 30    
+    push de
+    pop hl
     call Add8BitTo16Bit
-    call HLtoDE
-    call UnScratchHL
+    push hl
+    pop de
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;DRAW BOTTOM;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;return hl to rank/suit byte
-    dec hl
-    dec hl
-    dec hl
-    dec hl
-    ld a, [hl]
-    and %00000111  ;isolate suit
+    
+    ld a, [wScratchJ] ;suit
     add NUM_RANKS  
     ld [de], a
     inc de
@@ -177,8 +180,11 @@ RenderCard::
     ld a, NUM_RANKS + NUM_SUITS + NUM_ANIMALS + NUM_LEFTART + NUM_MIDDLEART + NUM_RIGHTART + 3
     ld [de], a
 
-    call WaitNotVBlank
-    call WaitVBlank
+    
+    pop bc
+    pop de   
+
+    call WaitNextFrame
     ret
 
 ;hl=vram address ($9800 - $9BFF), a=length, b=height, fills with [wSelectedTileIndex] 
@@ -212,101 +218,103 @@ FillBlock::
 
     ret
 
-;;goes through PlayerCards and renders each one whose location is 01
+;;goes through PlayerCards and renders by order each one whose location is 01
 RenderHand::
+    push bc
+    push de
+    push hl
     call WaitNextFrame
     ;get # of cards in hand
-    ld hl, PlayerCards
-    call ScratchHL
+    ld hl, PlayerCards    
     ld a, $01
-    call CountCards
-    call UnScratchHL
-    dec hl ;offset inc hl 4 times at beginning of render loop
-    dec hl
-    dec hl
-    dec hl
+    call CountCards   
+    ; dec hl ;offset inc hl 4 times at beginning of render loop
+    ; dec hl
+    ; dec hl
+    ; dec hl
     ;call ScratchHL
-    ld [wScratchH], a ;scratchH is card count
+    ld d, a ;d is card count in hand
     ld a, 0
-    ld [wScratchG], a ;scratchG is cards rendered so far
+    ld e, a ;e is cards rendered so far
 
     ;determine which of 3 layouts to render, 1-5 cards, 6-8 cards, or 9-15 cards
-    ld a, [wScratchH] ;get back to card count
+    ld a, d ;get back to card count
     add 0
-    ret z ;return without rendering anything if there are 0 cards in hand
+    jp z, .endRender ;return without rendering anything if there are 0 cards in hand
     sub 10 
     jp nc, .render15
-    ld a, [wScratchH]
+    ld a, d
     sub 7
     jp nc, .render8
     ;set hand offset and render. 
     ld a, 3
     ld [wHandOffset], a
-    jp .render
+    jp .renderLoop
 
     .render8:
         ld a, 2
         ld [wHandOffset], a
-        jp .render       
+        jp .renderLoop  
 
     .render15:
         ld a, 1
         ld [wHandOffset], a    
-    .render:                
-        inc hl
-        inc hl
-        inc hl
-        inc hl
-        ld a, [hl] ;get base index+location of next card in PlayerCards
-        ld [wScratchJ], a ;save index
-        ;test if its in hand
-        and %00000011
-        sub 1
-        jp nz, .render
+    .renderLoop: 
         
-        ;call ScratchHL
-        ;get turn rank
-        inc hl
-        inc hl        
-        ld a, [hl]  
-        and %00011111
-        ld [wScratchF], a ; save rank
         
-        ;store hl away until after we render this card
-        ld a, h
-        ld [wScratchE], a
-        ld a, l
-        ld [wScratchI], a
-        ;add rendered card count * offset to vram address 
-        ld a, [wHandOffset]
-        ld b, a
-        ld a, [wScratchG]        
-        call Multiply8
-        call ScratchHL2
-        ld hl, HAND_CARD_1 ;add offset to vram location       
-        call Add8BitTo16Bit
-        ld a, [wScratchF]
-        ld b, a ;load b with rank
-        ld a, [wScratchJ] ;get card index back
-        call RenderCard  
-        ld a, [wScratchG]
-        inc a ;rendered card count increases
-        ld [wScratchG], a
-        ;is cards rendered == card count? if so then ret
-        ld b, a
-        ld a, [wScratchH] ;get card count
-        sub b 
-        ret z
-        ;if not then restore hl to point at the next index of cards in hand and return to the start of the loop
-        ld a, [wScratchE]
-        ld h, a
-        ld a, [wScratchI]
-        ld l, a
-        call UnScratchHL2
-        dec hl
-        dec hl
-        jp .render
-
+        ld hl, PlayerCards
+        ;hand count is now # of cards left to render, and thus the order value of the card we want to render
+        ld a, d 
+        dec a ;offset for 0-based counting
+        ;adjust a to GetIndexFromOrder, takes OOOOOOLL
+        sla a
+        sla a            
+        or %00000001 ;give it the hand location code 01
+        call GetIndexFromOrder
+        ;now convert the index into an address
+        ld b, 2
+        call GetAddressFromIndex
+        call .render
+        ;check for end of render
+        ld a, d
+        cp 0
+        jp nz, .renderLoop
+        .endRender:
+            pop hl
+            pop de
+            pop bc
+            ret  
+        
+    .render:
+            ld a, [hl]
+            srl a
+            srl a
+            ld [wScratchJ], a ;save base index
+            inc hl
+            inc hl ;go to 3rd byte and get turn rank 
+            ld a, [hl] ;load RRRrrrrr
+            and %00011111
+            ld [wScratchF], a ;save rank            
+            
+            ;add rendered card count * offset to vram address 
+            ld a, [wHandOffset]
+            ld b, e               
+            call Multiply8            
+            ld hl, HAND_CARD_1 ;add offset to vram location       
+            call Add8BitTo16Bit
+            ld a, [wScratchF]
+            ld b, a ;load b with rank
+            ;call WaitNextFrame
+            ld a, [wScratchJ] ;get card index back
+            
+            call RenderCard  
+            inc e ;rendered card count increases
+            dec d ;cards to render decreases
+            
+            ret
+        
+        
+    
 
 
 ;sets tiles in hand zone to clear.  $99C0 - $9A33

@@ -68,9 +68,9 @@ call InitializeRandom
 call InitializeCardLocations
 
 
-call GenerateRandomDeck
+call GenerateRandomDecks
 
-call RenderHand
+;call RenderHand
 
 Main:
 ;wait till its not Vblank
@@ -83,12 +83,18 @@ cp 144
 jp c, WaitVBlank2
 
 call UpdateKeys
-
+CheckB:
+    ld a, [wNewKeys]
+    and a, PADF_B
+    jp z, CheckA
+    
 CheckA:
     ld a, [wNewKeys]
     and a, PADF_A
     jp z, CheckLeft   
     call ClearHand
+    ;call PlayerDraw
+    
     call PlayerDraw
     call RenderHand
     ; ld a, $10

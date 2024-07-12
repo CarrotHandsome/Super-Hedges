@@ -86,6 +86,8 @@ MultiplyN::
     ret
 ;multiply a by b, return a
 Multiply8::
+    push bc
+    push de
     ld c, 0 ;we need c=0 for if b=0 and we immediately jumpt to .returnProduct
     ld d, a
     ld a, b
@@ -103,6 +105,8 @@ Multiply8::
         jp .multLoop
     .returnProduct:
         ld a, c
+        pop de
+        pop bc
         ret
         
 

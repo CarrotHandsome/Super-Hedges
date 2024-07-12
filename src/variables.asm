@@ -36,6 +36,8 @@ LocationsStart::
 ;byte 3, bits 5-7: unused
 PlayerCards:: ds 64 * 4 ;64 cards times 4 bytes
 ScenarioCards:: ds 64 * 4
+Explore1:: ds 3 * 4
+Explore2:: ds 3 * 4
 LocationsEnd::
 
 
