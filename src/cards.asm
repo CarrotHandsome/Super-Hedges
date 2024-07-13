@@ -130,7 +130,7 @@ InitializeCardLocations::
 GetAddressFromIndex::
     push bc
     push de
-    push hl
+    
     ld c, b
     call ScratchHL
     ld b, c
@@ -141,7 +141,7 @@ GetAddressFromIndex::
     call UnScratchHL
     call Add16BitTo16Bit ;add index offset to address    
     ;[hl] = first byte of card data
-    pop hl
+    
     pop de
     pop bc
     ret
@@ -304,16 +304,13 @@ MoveCard::
 PlayerDraw::
     ;get order to apply to drawn card by counting cards already in hand
     ld hl, PlayerCards
-    ld a, 1
-    call CountCards
-    jp z, .noCards 
-    dec a
-    .noCards:
-    
+    ld a, 0 ;deck location code
+    call CountCards ;gets order to get address from
+    dec a ;account for 0-based index
     sla a
     sla a
-    or %00000001
-    ld b, %00000001
+    or 1 ;add destination location
+    ld b, 1 ;order method from deck for MoveCard
     call MoveCard
     ret
 ;move a card from the scenario deck to the emptiest explore stack, leftmost breaking ties
@@ -566,6 +563,129 @@ ResetRank::
     
     ret
 
+;hl=collection address, a=index, b=RRRRRTTT R=rank T=tier of rank: base rank > scenario rank > turn rank
+;this only needs scenario or turn rank - base rank cant be altered. altering one doesnt alter the other
+;TT: 000 => scenario, 001 => turn
+SetRank::
+    push bc
+    push hl
+    ld c, b
+    ld d, c
+    srl c
+    srl c
+    srl c ;=rank
+    ld b, 2
+    call GetAddressFromIndex
+    ld a, d
+    and %00000011
+    cp 0
+    jp z, .scenario
+    ;if not scenario rank, then edit turn rank
+    inc hl
+    inc hl
+    ld a, [hl]
+    and %11100000
+    or c
+    ld [hl], a
+    pop hl
+    pop bc
+    ret
+    .scenario:
+        inc hl
+        ;edit 1st rank byte
+        ld a, [hl]
+        and %11111100
+        ld b, a
+        ld a, c
+        srl a
+        srl a
+        srl a
+        or b
+        ld [hli], a
+        ld a, c
+        and %00011111
+        ld b, a
+        ld a, c
+        sla a
+        sla a
+        sla a
+        sla a
+        sla a
+        or b
+        ld [hl], a
+        pop hl
+        pop bc
+        ret
+
+;hl=collection address, a=TTiiiiii TT=scenario or turn rank. 00 scenario, 01 turn
+GetRank::
+    push bc
+    push hl
+    ld b, a
+    and %11000000
+    ld c, a ;c=TT00000
+    ld a, b
+    and %00111111
+
+    ld b, 2
+    call GetAddressFromIndex
+    ld a, c
+    and %01000000
+    jp z, .scenario
+    inc hl
+    inc hl
+    ld a, [hl]
+    and %00111111
+    pop hl
+    pop bc
+    ret
+    .scenario:
+        inc hl
+        ld a, [hli]
+        and %00000011
+        sla a
+        sla a
+        sla a
+        ld b, a
+        ld a, [hl]
+        and %11100000
+        srl a
+        srl a
+        srl a
+        srl a
+        srl a
+        or b
+        pop hl
+        pop bc
+        ret
+
+    
+;edit players cards turn rank to +1
+EditAllRanks::
+    ld b, 10 ;number of cards to alter
+    
+    ld c, 0 ;cards altered, use for index
+    .loop:
+        ld hl, PlayerCards
+        ld a, c
+        or %01000000
+        call GetRank
+
+        ;set rank to rank+1
+        inc a
+        ld hl, PlayerCards
+        sla a
+        sla a
+        sla a
+        or %00000001 ;add turn rank flag
+        ld b, a
+        ld a, c
+        call SetRank
+        inc c
+        ld a, b
+        cp c
+        jp nc, .loop
+        ret
 
 
 

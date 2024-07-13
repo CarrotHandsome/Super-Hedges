@@ -87,7 +87,9 @@ CheckB:
     ld a, [wNewKeys]
     and a, PADF_B
     jp z, CheckA
-    
+    call EditAllRanks
+    call ClearHand
+    call RenderHand
 CheckA:
     ld a, [wNewKeys]
     and a, PADF_A
