@@ -300,23 +300,17 @@ MoveCard::
     pop de
     ret
 
-;move first card in deck to hand
-PlayerDraw::
-    ;get order to apply to drawn card by counting cards already in hand
-    ld hl, PlayerCards
+;hl=collection address.
+;move highest order card in location 00 to location 01
+DrawFromDeck::    
     ld a, 0 ;deck location code
-    call CountCards ;gets order to get address from
+    call CountCards ;gets highest order + 1
     dec a ;account for 0-based index
     sla a
     sla a
     or 1 ;add destination location
     ld b, 1 ;order method from deck for MoveCard
     call MoveCard
-    ret
-;move a card from the scenario deck to the emptiest explore stack, leftmost breaking ties
-AddExploreCard::
-    ;get the emptiest explore stack
-
     ret
 
 ;takes collection address hl, 6 bit order value b with rightmost 2 bits for location 
@@ -441,7 +435,7 @@ DrawRandomCard::
 
 ;make sure to order the cards. they will start with the deck (00) location code
 GenerateRandomDecks::
-    ld a, 16  ;number of cards to make
+    ld a, 63  ;number of cards to make
     ld b, 0     ;order
     
     .loop:        
@@ -469,33 +463,33 @@ GenerateRandomDecks::
         dec a    
         jp nz, .loop
     
-        ld a, 16  ;number of cards to make
-        ld b, 0     ;order
-        
-        .loop2:        
-            ld [wScratchG], a 
-            ld a, b
-            ld  [wScratchH], a
-            call GenerateRandomBaseCardIndex
-            ld hl, ScenarioCards        
-            call CreateCard   
-            inc hl
-            ld a, [wScratchH]
-            ld b, a
-            ld a, [hl]
-            ;clear order bits
-            and %00000011   
-            ;rotate new order bits to left of byte     
-            sla b
-            sla b
-            or b ;combine order bits with 1st 2 rank bits
-            ld [hl], a        
-            ld a, [wScratchH]
-            ld b, a
-            ld a, [wScratchG]
-            inc b        
-            dec a    
-            jp nz, .loop2
+    ld a, 63  ;number of cards to make
+    ld b, 0     ;order
+    
+    .loop2:        
+        ld [wScratchG], a 
+        ld a, b
+        ld  [wScratchH], a
+        call GenerateRandomBaseCardIndex
+        ld hl, ScenarioCards        
+        call CreateCard   
+        inc hl
+        ld a, [wScratchH]
+        ld b, a
+        ld a, [hl]
+        ;clear order bits
+        and %00000011   
+        ;rotate new order bits to left of byte     
+        sla b
+        sla b
+        or b ;combine order bits with 1st 2 rank bits
+        ld [hl], a        
+        ld a, [wScratchH]
+        ld b, a
+        ld a, [wScratchG]
+        inc b        
+        dec a    
+        jp nz, .loop2
     ret
 
 ;hl=collection address, a=card index, b: 3=>reset to base rank, 2=>reset to scenario rank

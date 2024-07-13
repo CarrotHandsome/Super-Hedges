@@ -87,17 +87,18 @@ CheckB:
     ld a, [wNewKeys]
     and a, PADF_B
     jp z, CheckA
-    call EditAllRanks
-    call ClearHand
-    call RenderHand
+    call ClearEncounters
+    ld hl, ScenarioCards
+    call DrawFromDeck
+    call RenderEncounters
 CheckA:
     ld a, [wNewKeys]
     and a, PADF_A
     jp z, CheckLeft   
     call ClearHand
     ;call PlayerDraw
-    
-    call PlayerDraw
+    ld hl, PlayerCards
+    call DrawFromDeck
     call RenderHand
     ; ld a, $10
     ; ld hl, PlayerHand

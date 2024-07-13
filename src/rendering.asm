@@ -218,6 +218,60 @@ FillBlock::
 
     ret
 
+RenderEncounters::
+    call WaitNextFrame
+    ld hl, ScenarioCards
+    ld a, 1
+    call CountCards
+    ld d, a ;cards left to render
+    ld e, 0 ;cards rendered
+    .renderLoop:
+        ld hl, ScenarioCards        
+        ld a, d 
+        dec a ;offset for 0-based counting
+        ;adjust a to GetIndexFromOrder, takes OOOOOOLL
+        sla a
+        sla a            
+        or %00000001 ;give it the encounter location code 01
+        call GetIndexFromOrder
+        ;now convert the index into an address
+        ld b, 2
+        call GetAddressFromIndex
+        call .render
+        ;check for end of render
+        ld a, d
+        cp 0
+        jp nz, .renderLoop       
+        ret  
+
+    .render:
+        ld a, [hl]
+        srl a
+        srl a
+        ld [wScratchJ], a ;save base index
+        inc hl
+        inc hl ;go to 3rd byte and get turn rank 
+        ld a, [hl] ;load RRRrrrrr
+        and %00011111
+        ld [wScratchF], a ;save rank            
+        
+        ;add rendered card count * 3 to vram address (cards spaced 3 apart)
+        ld a, 3
+        ld b, e               
+        call Multiply8            
+        ld hl, ENCOUNTER_CARD_1 ;add offset to vram location       
+        call Add8BitTo16Bit
+        ld a, [wScratchF]
+        ld b, a ;load b with rank
+        ;call WaitNextFrame
+        ld a, [wScratchJ] ;get card index back
+        
+        call RenderCard  
+        inc e ;rendered card count increases
+        dec d ;cards to render decreases
+        
+        ret
+
 ;;goes through PlayerCards and renders by order each one whose location is 01
 RenderHand::
     push bc
@@ -312,14 +366,15 @@ RenderHand::
             dec d ;cards to render decreases
             
             ret
-        
-        
-    
 
-
-;sets tiles in hand zone to clear.  $99C0 - $9A33
 ClearHand::
     ld hl, HAND_CARD_1
+    ld a, 20
+    ld b, 4
+    call FillBlock
+    ret
+ClearEncounters::
+    ld hl, ENCOUNTER_CARD_1
     ld a, 20
     ld b, 4
     call FillBlock
